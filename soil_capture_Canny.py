@@ -24,7 +24,7 @@ for i in range(height):
             mask[i, j] = False
 
 im_gsm = ndimage.gaussian_filter(im, 5)
-im_gsm += 0.05 * np.random.random(im_gsm.shape)
+# im_gsm += 0.05 * np.random.random(im_gsm.shape)
 edges1 = feature.canny(im, sigma=4, mask=mask)
 filled_edges1 = binary_fill_holes(edges1)
 
