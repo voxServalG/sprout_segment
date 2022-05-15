@@ -111,7 +111,7 @@ IMAGE_SAND_CROPPED_SPROUTED = 'sample_sand_cropped.jpeg'
 IMAGE_TEST = 'rgb_20220403_125355.jpeg'
 if __name__ == "__main__":
     start_time = time.time()
-    image = imread(IMAGE_TEST)
+    image = imread(IMAGE_SAND_CROPPED_SPROUTED)
     title_size = 10
     min_thresh = [20, 35, 15, 70]
     # R-G, R-B, G-B, 2G - R - B
