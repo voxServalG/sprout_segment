@@ -1,4 +1,5 @@
 # sprout_segment
+环境要求：python3, numpy及skimage
 下载并解压压缩包。
 在sprout_segment-research文件夹新建source文件。
 将待处理图片放入source
