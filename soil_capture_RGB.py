@@ -1,6 +1,4 @@
 import numpy as np
-from matplotlib import pylab
-from scipy.ndimage import binary_fill_holes
 
 
 def pixel_contains_soil(pixel_value, min_threshold_list, max_threshold_list):
