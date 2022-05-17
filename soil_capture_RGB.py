@@ -48,6 +48,7 @@ def get_color_diff(im):
     :param im:  A 3-dimensional array (e.g. RGB image).
     :return:    A tuple like (R-G, R-B, G-B, 2G-R-B) containing four 2-dimensional arrays, each telling a color
                 difference of :parameter im.
+    这个函数获取原图im的R-G, R-B, G-B, 2R-G-B数据，返回4个720*1280矩阵。
     """
     R_minus_G = im[:, :, 0] - im[:, :, 1]
     R_minus_B = im[:, :, 0] - im[:, :, 2]
@@ -163,54 +164,52 @@ def get_mask(im, min_threshold, max_threshold, ratio=None):
     # '''调试2'''
 
 
-def get_processed_mask(mask, ratio):
-    """
-
-    :param mask:    A 2-dimensional array.
-    :param ratio:   A float value. Any row/column of :parameter mask containing 'True' value at a ratio less than
-                    :parameter ratio will be marked as 'False'.
-    :return:        A 2-dimensional array.
-    """
-    height, width = mask.shape[:2]
-    result = np.zeros((height, width), dtype=bool)
-    row_sums = np.sum(mask, axis=1)
-    column_sums = np.sum(mask, axis=0)
-    row_sum_threshold = (len(column_sums) + 1) * ratio
-    column_sum_threshold = (len(row_sums) + 1) * ratio
-    height_min, height_max, width_min, width_max = (height, 0, width, 0)
-
-    index_row = 0
-    for i in range(0, len(row_sums)):
-        if row_sums[i] >= row_sum_threshold and i < height_min:
-            height_min = i
-            index_row += 1
-            break
-        index_row += 1
-    for i in range(index_row, len(row_sums)):
-        if row_sums[i] >= row_sum_threshold and i > height_max:
-            height_max = i
-
-    index_column = 0
-    for i in range(0, len(column_sums)):
-        if column_sums[i] >= column_sum_threshold and i < width_min:
-            width_min = i
-            index_column += 1
-            break
-        index_column += 1
-    for i in range(index_column, len(column_sums)):
-        if column_sums[i] >= column_sum_threshold and i > width_max:
-            width_max = i
-
-    result[height_min:height_max + 1, width_min:width_max + 1] = True
-    # '''调试3'''
-    # f, ax = pylab.subplots(nrows=1, ncols=1)
-    # ax.imshow(processed_filled_mask)
-    # ax.set_title('Processed Filled Mask', fontsize=10)
-    # print('调试3完成')
-    # '''调试3'''
-    return result
-
-
+# def get_processed_mask(mask, ratio):
+#     """
+#
+#     :param mask:    A 2-dimensional array.
+#     :param ratio:   A float value. Any row/column of :parameter mask containing 'True' value at a ratio less than
+#                     :parameter ratio will be marked as 'False'.
+#     :return:        A 2-dimensional array.
+#     """
+#     height, width = mask.shape[:2]
+#     result = np.zeros((height, width), dtype=bool)
+#     row_sums = np.sum(mask, axis=1)
+#     column_sums = np.sum(mask, axis=0)
+#     row_sum_threshold = (len(column_sums) + 1) * ratio
+#     column_sum_threshold = (len(row_sums) + 1) * ratio
+#     height_min, height_max, width_min, width_max = (height, 0, width, 0)
+#
+#     index_row = 0
+#     for i in range(0, len(row_sums)):
+#         if row_sums[i] >= row_sum_threshold and i < height_min:
+#             height_min = i
+#             index_row += 1
+#             break
+#         index_row += 1
+#     for i in range(index_row, len(row_sums)):
+#         if row_sums[i] >= row_sum_threshold and i > height_max:
+#             height_max = i
+#
+#     index_column = 0
+#     for i in range(0, len(column_sums)):
+#         if column_sums[i] >= column_sum_threshold and i < width_min:
+#             width_min = i
+#             index_column += 1
+#             break
+#         index_column += 1
+#     for i in range(index_column, len(column_sums)):
+#         if column_sums[i] >= column_sum_threshold and i > width_max:
+#             width_max = i
+#
+#     result[height_min:height_max + 1, width_min:width_max + 1] = True
+#     # '''调试3'''
+#     # f, ax = pylab.subplots(nrows=1, ncols=1)
+#     # ax.imshow(processed_filled_mask)
+#     # ax.set_title('Processed Filled Mask', fontsize=10)
+#     # print('调试3完成')
+#     # '''调试3'''
+#     return result
 
 
 def get_masked_image(im, mask):
@@ -219,29 +218,31 @@ def get_masked_image(im, mask):
     :param im:
     :param mask:
     :return:
+    原图im是720*1280*3的矩阵，这个矩阵记录了原图的色彩信息。
+    滤镜mask是720*1080的boolean矩阵（它的元素只有True和False）
+    将mask套用在im上：如果mask的i行j列是False，那么就把im的第i行第j列设成黑色。
+                    如果mask的i行j列是True，那么就保留im的第i行第j列，让其不变。
     """
     height, width = im.shape[:2]  # height is row and width is column
-    masked_image = im.copy()
+    # masked_image = im.copy()
     for i in range(height):
         for j in range(width):
             if mask[i, j] == 0:
-                masked_image[i, j, :] = 0
+                im[i, j, :] = 0
             else:
                 pass
-    return masked_image
+    return im
 
 
-def soilCapture(im, min_thresh=None, max_thresh=None):
+def get_soilpart_of_image(im, min_thresh=None, max_thresh=None):
     if max_thresh is None:
-        max_thresh = [40, 70, 35, 110]
+        max_thresh = [40, 70, 35, 110]  # 设定R-G, R-B, G-B, 2R-G-B的最大阈值。若某个像素的四个指标的任何一个超过对应阈值，它都不会被认为是泥土或者幼芽
     if min_thresh is None:
-        min_thresh = [20, 35, 15, 70]
+        min_thresh = [20, 35, 15, 70]  # 设定R-G, R-B, G-B, 2R-G-B的最小阈值。若某个像素的四个指标的任何一个小于对应阈值，它都不会被认为是泥土或者幼芽
     # im_blurred = cv2.blur(im, (7, 7))
-    return get_masked_image(im, get_mask(im, min_thresh, max_thresh))
+    return get_masked_image(im, get_mask(im, min_thresh, max_thresh))  # 先获取mask，再将mask套用在原图上得到处理结果并返回。
 
-
-def plot_image(im, title):
-    f, ax = pylab.subplots(nrows=1, ncols=1)
-    ax.imshow(im)
-    ax.set_title(title, fontsize=10)
-
+# def plot_image(im, title):
+#     f, ax = pylab.subplots(nrows=1, ncols=1)
+#     ax.imshow(im)
+#     ax.set_title(title, fontsize=10)
