@@ -82,7 +82,7 @@ def get_mask(im, min_threshold, max_threshold, ratio=None):
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
-        if (pixel_contains_soil_or_sprout / width) > ratio:
+        if (pixel_contains_soil_or_sprout / width) > ratio:a
             upper_row = i
             break
 
@@ -240,7 +240,7 @@ def get_soilpart_of_image(im, min_thresh=None, max_thresh=None):
     if min_thresh is None:
         min_thresh = [20, 35, 15, 70]  # 设定R-G, R-B, G-B, 2R-G-B的最小阈值。若某个像素的四个指标的任何一个小于对应阈值，它都不会被认为是泥土或者幼芽
     # im_blurred = cv2.blur(im, (7, 7))
-    return get_masked_image(im, get_mask(im, min_thresh, max_thresh))  # 先获取mask，再将mask套用在原图上得到处理结果并返回。
+    return get_masked_image(im, get_mask(im, min_thresh, max_thresh, ratio=0.20))  # 先获取mask，再将mask套用在原图上得到处理结果并返回。
 
 # def plot_image(im, title):
 #     f, ax = pylab.subplots(nrows=1, ncols=1)
