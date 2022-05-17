@@ -57,9 +57,11 @@ def get_color_diff(im):
     return R_minus_G, R_minus_B, G_minus_B, green_diff
 
 
-def get_mask(im, min_threshold, max_threshold, ratio=None):
+def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None):
     """
 
+    :param beta:
+    :param alpha:
     :param im:              A 3-dimensional array (e.g. RGB image).
     :param min_threshold:   A list containing minimum threshold of (R-G, R-B, G-B, 2R-G-B) value.
     :param max_threshold:   A list containing maximum threshold of (R-G, R-B, G-B, 2R-G-B) value.
@@ -70,10 +72,17 @@ def get_mask(im, min_threshold, max_threshold, ratio=None):
     """
     if ratio is None:
         ratio = 0.39
+    if alpha is None:
+        alpha = 2
+    if beta is None:
+        beta = 2
     color_diff = get_color_diff(im)
     height, width = color_diff[0].shape[:2]
     mask = np.zeros((height, width))
     upper_row, lower_row, left_col, right_col = (0, 0, 0, 0)
+
+    checkpoint_LR = width / alpha
+    ratio_check = ratio / beta
     for i in range(height):
         pixel_contains_soil_or_sprout = 0
         for j in range(width):
@@ -82,7 +91,10 @@ def get_mask(im, min_threshold, max_threshold, ratio=None):
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
-        if (pixel_contains_soil_or_sprout / width) > ratio:a
+
+            if j == checkpoint_LR and pixel_contains_soil_or_sprout / j < ratio_check:
+                break
+        if (pixel_contains_soil_or_sprout / width) > ratio:
             upper_row = i
             break
 
@@ -94,10 +106,16 @@ def get_mask(im, min_threshold, max_threshold, ratio=None):
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
+
+            if j == checkpoint_LR and pixel_contains_soil_or_sprout / j < ratio_check:
+                break
+
         if pixel_contains_soil_or_sprout / width > ratio:
             lower_row = i
             break
 
+    row_to_iterate = lower_row - upper_row + 1
+    checkpoint_UL = row_to_iterate / alpha
     for i in range(width):
         pixel_contains_soil_or_sprout = 0
         for j in range(upper_row, lower_row + 1):
@@ -106,6 +124,10 @@ def get_mask(im, min_threshold, max_threshold, ratio=None):
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
+
+            if j == checkpoint_UL and pixel_contains_soil_or_sprout / j < ratio_check:
+                break
+
         if pixel_contains_soil_or_sprout / height > ratio:
             left_col = i
             break
@@ -118,6 +140,10 @@ def get_mask(im, min_threshold, max_threshold, ratio=None):
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
+
+            if j == checkpoint_UL and pixel_contains_soil_or_sprout / j < ratio_check:
+                break
+
         if pixel_contains_soil_or_sprout / height > ratio:
             right_col = i
             break
@@ -240,7 +266,8 @@ def get_soilpart_of_image(im, min_thresh=None, max_thresh=None):
     if min_thresh is None:
         min_thresh = [20, 35, 15, 70]  # 设定R-G, R-B, G-B, 2R-G-B的最小阈值。若某个像素的四个指标的任何一个小于对应阈值，它都不会被认为是泥土或者幼芽
     # im_blurred = cv2.blur(im, (7, 7))
-    return get_masked_image(im, get_mask(im, min_thresh, max_thresh, ratio=0.20))  # 先获取mask，再将mask套用在原图上得到处理结果并返回。
+    return get_masked_image(im, get_mask(im, min_thresh, max_thresh, ratio=0.2, alpha=2,
+                                         beta=2.5))  # 先获取mask，再将mask套用在原图上得到处理结果并返回。
 
 # def plot_image(im, title):
 #     f, ax = pylab.subplots(nrows=1, ncols=1)
