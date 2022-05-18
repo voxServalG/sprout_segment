@@ -90,7 +90,11 @@ def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
-
+        # 从上到下遍历每一行的(0.5 - alpha, 0.5 + alpha)区间，遍历长度2*alpha
+        # 看这个区间内的“有效点”占本行的比例是否小于2*alpha*beta。
+        # 如果小于，本行的全部像素都不予采信，直接跳到下一行
+        # 如果大于，就遍历该行的全部像素，看”有效点“占本行的比例是否超过ratio
+        # 如果超过，本行就是upper_row
         if pixel_contains_soil_or_sprout / width < 2 * alpha * beta:
             continue
         else:
@@ -108,9 +112,9 @@ def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None
                         green_val, min_threshold[3], max_threshold[3]):
                     pixel_contains_soil_or_sprout += 1
 
-        if pixel_contains_soil_or_sprout / width > ratio:
-            upper_row = i
-            break
+            if pixel_contains_soil_or_sprout / width > ratio:
+                upper_row = i
+                break
 
     for i in reversed(range(height)):
         pixel_contains_soil_or_sprout = 0
@@ -120,7 +124,11 @@ def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
-
+        # 从下到上遍历每一行的(0.5 - alpha, 0.5 + alpha)区间，遍历长度2*alpha
+        # 看这个区间内的“有效点”占本行的比例是否小于2*alpha*beta。
+        # 如果小于，本行的全部像素都不予采信，直接跳到下一行
+        # 如果大于，就遍历该行的全部像素，看”有效点“占本行的比例是否超过ratio
+        # 如果超过，本行就是lower_row
         if pixel_contains_soil_or_sprout / width < 2 * alpha * beta:
             continue
         else:
@@ -138,9 +146,9 @@ def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None
                         green_val, min_threshold[3], max_threshold[3]):
                     pixel_contains_soil_or_sprout += 1
 
-        if pixel_contains_soil_or_sprout / width > ratio:
-            lower_row = i
-            break
+            if pixel_contains_soil_or_sprout / width > ratio:
+                lower_row = i
+                break
 
     for i in range(width):
         pixel_contains_soil_or_sprout = 0
@@ -150,7 +158,11 @@ def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
-
+        # 从左到右遍历每一列的(0.5 - alpha, 0.5 + alpha)区间，遍历长度2*alpha
+        # 看这个区间内的“有效点”占本列的比例是否小于2*alpha*beta。
+        # 如果小于，本列的全部像素都不予采信，直接跳到下一列
+        # 如果大于，就遍历该列从upper_row到lower_row的全部像素，看”有效点“占本列的比例是否超过ratio
+        # 如果超过，本列就是left_col
         if pixel_contains_soil_or_sprout / height < 2 * alpha * beta:
             continue
         else:
@@ -167,9 +179,9 @@ def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None
                         green_val, min_threshold[3], max_threshold[3]):
                     pixel_contains_soil_or_sprout += 1
 
-        if pixel_contains_soil_or_sprout / height > ratio:
-            left_col = i
-            break
+            if pixel_contains_soil_or_sprout / height > ratio:
+                left_col = i
+                break
 
     for i in reversed(range(width)):
         pixel_contains_soil_or_sprout = 0
@@ -179,7 +191,11 @@ def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
-
+        # 从右到左遍历每一列的(0.5 - alpha, 0.5 + alpha)区间，遍历长度2*alpha
+        # 看这个区间内的“有效点”占本列的比例是否小于2*alpha*beta。
+        # 如果小于，本列的全部像素都不予采信，直接跳到下一列
+        # 如果大于，就遍历该列从upper_row到lower_row的全部像素，看”有效点“占本列的比例是否超过ratio
+        # 如果超过，本列就是right_col
         if pixel_contains_soil_or_sprout / height < 2 * alpha * beta:
             continue
         else:
@@ -196,9 +212,9 @@ def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None
                         green_val, min_threshold[3], max_threshold[3]):
                     pixel_contains_soil_or_sprout += 1
 
-        if pixel_contains_soil_or_sprout / height > ratio:
-            right_col = i
-            break
+            if pixel_contains_soil_or_sprout / height > ratio:
+                right_col = i
+                break
 
     mask[upper_row:lower_row + 1, left_col:right_col + 1] = 1
     # filled_mask = binary_fill_holes(mask)
