@@ -73,60 +73,99 @@ def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None
     if ratio is None:
         ratio = 0.39
     if alpha is None:
-        alpha = 2
+        alpha = 0.05
     if beta is None:
-        beta = 2
+        beta = 0.95
     color_diff = get_color_diff(im)
     height, width = color_diff[0].shape[:2]
     mask = np.zeros((height, width))
     upper_row, lower_row, left_col, right_col = (0, 0, 0, 0)
 
-    checkpoint_LR = width / alpha
-    ratio_check = ratio / beta
     for i in range(height):
         pixel_contains_soil_or_sprout = 0
-        for j in range(width):
+
+        for j in range(int(width * (0.5 - alpha)), int(width * (0.5 + alpha)) + 1):
             pixel_val = [color_diff[0][i, j], color_diff[1][i, j], color_diff[2][i, j]]
             green_val = color_diff[3][i, j]
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
 
-            if j == checkpoint_LR and pixel_contains_soil_or_sprout / j < ratio_check:
-                break
-        if (pixel_contains_soil_or_sprout / width) > ratio:
+        if pixel_contains_soil_or_sprout / width < 2 * alpha * beta:
+            continue
+        else:
+            for j in range(0, int(width * (0.5 - alpha))):
+                pixel_val = [color_diff[0][i, j], color_diff[1][i, j], color_diff[2][i, j]]
+                green_val = color_diff[3][i, j]
+                if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
+                        green_val, min_threshold[3], max_threshold[3]):
+                    pixel_contains_soil_or_sprout += 1
+
+            for j in range(int(width * (0.5 + alpha)) + 1, width):
+                pixel_val = [color_diff[0][i, j], color_diff[1][i, j], color_diff[2][i, j]]
+                green_val = color_diff[3][i, j]
+                if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
+                        green_val, min_threshold[3], max_threshold[3]):
+                    pixel_contains_soil_or_sprout += 1
+
+        if pixel_contains_soil_or_sprout / width > ratio:
             upper_row = i
             break
 
     for i in reversed(range(height)):
         pixel_contains_soil_or_sprout = 0
-        for j in range(width):
+        for j in range(int(width * (0.5 - alpha)), int(width * (0.5 + alpha)) + 1):
             pixel_val = [color_diff[0][i, j], color_diff[1][i, j], color_diff[2][i, j]]
             green_val = color_diff[3][i, j]
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
 
-            if j == checkpoint_LR and pixel_contains_soil_or_sprout / j < ratio_check:
-                break
+        if pixel_contains_soil_or_sprout / width < 2 * alpha * beta:
+            continue
+        else:
+            for j in range(0, int(width * (0.5 - alpha))):
+                pixel_val = [color_diff[0][i, j], color_diff[1][i, j], color_diff[2][i, j]]
+                green_val = color_diff[3][i, j]
+                if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
+                        green_val, min_threshold[3], max_threshold[3]):
+                    pixel_contains_soil_or_sprout += 1
+
+            for j in range(int(width * (0.5 + alpha)) + 1, width):
+                pixel_val = [color_diff[0][i, j], color_diff[1][i, j], color_diff[2][i, j]]
+                green_val = color_diff[3][i, j]
+                if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
+                        green_val, min_threshold[3], max_threshold[3]):
+                    pixel_contains_soil_or_sprout += 1
 
         if pixel_contains_soil_or_sprout / width > ratio:
             lower_row = i
             break
 
-    row_to_iterate = lower_row - upper_row + 1
-    checkpoint_UL = row_to_iterate / alpha
     for i in range(width):
         pixel_contains_soil_or_sprout = 0
-        for j in range(upper_row, lower_row + 1):
+        for j in range(int(height * (0.5 - alpha)), int(height * (0.5 + alpha)) + 1):
             pixel_val = [color_diff[0][j, i], color_diff[1][j, i], color_diff[2][j, i]]
             green_val = color_diff[3][j, i]
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
 
-            if j == checkpoint_UL and pixel_contains_soil_or_sprout / j < ratio_check:
-                break
+        if pixel_contains_soil_or_sprout / height < 2 * alpha * beta:
+            continue
+        else:
+            for j in range(upper_row, int(height * (0.5 - alpha))):
+                pixel_val = [color_diff[0][j, i], color_diff[1][j, i], color_diff[2][j, i]]
+                green_val = color_diff[3][j, i]
+                if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
+                        green_val, min_threshold[3], max_threshold[3]):
+                    pixel_contains_soil_or_sprout += 1
+            for j in range(int(height * (0.5 + alpha)) + 1, lower_row):
+                pixel_val = [color_diff[0][j, i], color_diff[1][j, i], color_diff[2][j, i]]
+                green_val = color_diff[3][j, i]
+                if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
+                        green_val, min_threshold[3], max_threshold[3]):
+                    pixel_contains_soil_or_sprout += 1
 
         if pixel_contains_soil_or_sprout / height > ratio:
             left_col = i
@@ -134,15 +173,28 @@ def get_mask(im, min_threshold, max_threshold, ratio=None, alpha=None, beta=None
 
     for i in reversed(range(width)):
         pixel_contains_soil_or_sprout = 0
-        for j in range(upper_row, lower_row + 1):
+        for j in range(int(height * (0.5 - alpha)), int(height * (0.5 + alpha)) + 1):
             pixel_val = [color_diff[0][j, i], color_diff[1][j, i], color_diff[2][j, i]]
             green_val = color_diff[3][j, i]
             if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
                     green_val, min_threshold[3], max_threshold[3]):
                 pixel_contains_soil_or_sprout += 1
 
-            if j == checkpoint_UL and pixel_contains_soil_or_sprout / j < ratio_check:
-                break
+        if pixel_contains_soil_or_sprout / height < 2 * alpha * beta:
+            continue
+        else:
+            for j in range(upper_row, int(height * (0.5 - alpha))):
+                pixel_val = [color_diff[0][j, i], color_diff[1][j, i], color_diff[2][j, i]]
+                green_val = color_diff[3][j, i]
+                if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
+                        green_val, min_threshold[3], max_threshold[3]):
+                    pixel_contains_soil_or_sprout += 1
+            for j in range(int(height * (0.5 + alpha)) + 1, lower_row):
+                pixel_val = [color_diff[0][j, i], color_diff[1][j, i], color_diff[2][j, i]]
+                green_val = color_diff[3][j, i]
+                if pixel_contains_soil(pixel_val, min_threshold[0:3], max_threshold[0:3]) or pixel_contains_sprout(
+                        green_val, min_threshold[3], max_threshold[3]):
+                    pixel_contains_soil_or_sprout += 1
 
         if pixel_contains_soil_or_sprout / height > ratio:
             right_col = i
@@ -260,14 +312,21 @@ def get_masked_image(im, mask):
     return im
 
 
-def get_soilpart_of_image(im, min_thresh=None, max_thresh=None):
+def get_soilpart_of_image(im, min_thresh=None, max_thresh=None, ratio=None, alpha=None, beta=None):
     if max_thresh is None:
         max_thresh = [40, 70, 35, 110]  # 设定R-G, R-B, G-B, 2R-G-B的最大阈值。若某个像素的四个指标的任何一个超过对应阈值，它都不会被认为是泥土或者幼芽
     if min_thresh is None:
         min_thresh = [20, 35, 15, 70]  # 设定R-G, R-B, G-B, 2R-G-B的最小阈值。若某个像素的四个指标的任何一个小于对应阈值，它都不会被认为是泥土或者幼芽
+    if ratio is None:
+        ratio = 0.2
+    if alpha is None:
+        alpha = 0.005
+    if beta is None:
+        beta = 0.95
+
     # im_blurred = cv2.blur(im, (7, 7))
-    return get_masked_image(im, get_mask(im, min_thresh, max_thresh, ratio=0.2, alpha=2,
-                                         beta=2.5))  # 先获取mask，再将mask套用在原图上得到处理结果并返回。
+    return get_masked_image(im, get_mask(im, min_thresh, max_thresh, ratio=ratio, alpha=alpha, beta=beta))  # 先获取mask
+    # ，再将mask套用在原图上得到处理结果并返回。
 
 # def plot_image(im, title):
 #     f, ax = pylab.subplots(nrows=1, ncols=1)
